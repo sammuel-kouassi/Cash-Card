@@ -1,0 +1,60 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.5'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'org.example'
+version = '0.0.1-SNAPSHOT'
+description = 'cashcard'
+
+// Compile targeting Java 17 class format to ensure compatibility with Spring dependencies
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Use the standard Spring MVC starter for the application
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // Use the standard Spring Boot test starter, which includes TestRestTemplate and JUnit/Jackson helpers
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    // Ensure core Spring Boot test modules are available for compilation (contains TestRestTemplate)
+    testImplementation 'org.springframework.boot:spring-boot-test'
+    testImplementation 'org.springframework.boot:spring-boot-test-autoconfigure'
+
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    implementation 'org.springframework.data:spring-data-jdbc'
+    implementation 'com.h2database:h2'
+
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    // In case a newer JDK is used to run tests, ignore incompatible class files found on the classpath during scanning
+    systemProperty 'spring.classformat.ignore', 'true'
+    // Attach Mockito/ByteBuddy agent explicitly to avoid future JDK restrictions on dynamic agent loading.
+    // See: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+    // Enable with: gradlew test -PenableMockitoAgent=true
+    if (project.hasProperty('enableMockitoAgent') && project.property('enableMockitoAgent').toString().toBoolean()) {
+        doFirst {
+            def artifacts = configurations.testRuntimeClasspath
+                    .resolvedConfiguration
+                    .resolvedArtifacts
+            def mockitoAgent = artifacts.find { it.name == 'mockito-agent' }?.file
+            def byteBuddyAgent = artifacts.find { it.name == 'byte-buddy-agent' }?.file
+            def agentFile = mockitoAgent?.exists() ? mockitoAgent : byteBuddyAgent
+            if (agentFile != null && agentFile.exists()) {
+                jvmArgs "-javaagent=${agentFile.absolutePath}"
+            }
+        }
+    }
+}
