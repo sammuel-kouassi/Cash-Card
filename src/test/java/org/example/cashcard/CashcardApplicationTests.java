@@ -137,12 +137,12 @@ class CashCardApplicationTests {
         ResponseEntity<String> response = restTemplate
                 .withBasicAuth("BAD-USER", "abc123")
                 .getForEntity("/cashcards/99", String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED); // 401 UNAUTHORIZED
 
         response = restTemplate
                 .withBasicAuth("sarah1", "BAD-PASSWORD")
                 .getForEntity("/cashcards/99", String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED); // 401 UNAUTHORIZED
     }
 
     // should Reject Users Who Are Not Card Owners
@@ -151,7 +151,7 @@ class CashCardApplicationTests {
         ResponseEntity<String> response = restTemplate
                 .withBasicAuth("hank-owns-no-cards", "qrs456")
                 .getForEntity("/cashcards/99", String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN); // 403 FORBIDDEN
     }
 
     // should Not Allow Access To CashCards They Do Not Own
@@ -160,7 +160,7 @@ class CashCardApplicationTests {
         ResponseEntity<String> response = restTemplate
                 .withBasicAuth("sarah1", "abc123")
                 .getForEntity("/cashcards/102", String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND); // 404 NOT FOUND
     }
 
     // should Update An Existing CashCard
@@ -173,7 +173,7 @@ class CashCardApplicationTests {
                 .withBasicAuth("sarah1", "abc123")
                 .exchange("/cashcards/99", HttpMethod.PUT, request, Void.class);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT); // 204 NO CONTENT
 
         ResponseEntity<String> getResponse = restTemplate
                 .withBasicAuth("sarah1", "abc123")
@@ -186,7 +186,7 @@ class CashCardApplicationTests {
         assertThat(amount).isEqualTo(19.99);
     }
 
-
+    // should Not Update A CashCard That Does Not Exist
     @Test
     void shouldNotUpdateACashCardThatDoesNotExist() {
         CashCard unknownCard = new CashCard(null, 19.99, null);
@@ -194,9 +194,10 @@ class CashCardApplicationTests {
         ResponseEntity<Void> response = restTemplate
                 .withBasicAuth("sarah1", "abc123")
                 .exchange("/cashcards/99999", HttpMethod.PUT, request, Void.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND); // 404 NOT FOUND
     }
 
+    // should Not Update A CashCard That Is Owned By Someone Else
     @Test
     void shouldNotUpdateACashCardThatIsOwnedBySomeoneElse() {
         CashCard kumarsCard = new CashCard(null, 333.33, null);
@@ -204,9 +205,10 @@ class CashCardApplicationTests {
         ResponseEntity<Void> response = restTemplate
                 .withBasicAuth("sarah1", "abc123")
                 .exchange("/cashcards/102", HttpMethod.PUT, request, Void.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND); // 404 NOT FOUND
     }
 
+    // should Delete An Existing CashCard
     @Test
     @DirtiesContext
     void shouldDeleteAnExistingCashCard() {
@@ -221,20 +223,22 @@ class CashCardApplicationTests {
         assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
+    // should Not Delete A CashCard That Does Not Exist
     @Test
     void shouldNotDeleteACashCardThatDoesNotExist() {
         ResponseEntity<Void> deleteResponse = restTemplate
                 .withBasicAuth("sarah1", "abc123")
                 .exchange("/cashcards/99999", HttpMethod.DELETE, null, Void.class);
-        assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);  // 404 NOT FOUND
     }
 
+    // should Not Allow Deletion Of CashCards They Do Not Own
     @Test
     void shouldNotAllowDeletionOfCashCardsTheyDoNotOwn() {
         ResponseEntity<Void> deleteResponse = restTemplate
                 .withBasicAuth("sarah1", "abc123")
                 .exchange("/cashcards/102", HttpMethod.DELETE, null, Void.class);
-        assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND); // 404 NOT FOUND
 
         ResponseEntity<String> getResponse = restTemplate
                 .withBasicAuth("kumar2", "xyz789")
